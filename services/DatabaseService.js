@@ -1,6 +1,6 @@
 const DatabaseConnection = require('./DatabaseConnection');
 
-const { mySqlConnection } = DatabaseConnection.getConnection();
+const { mySqlConnection } = DatabaseConnection;
 
 module.exports = {
     queryDatabase, beginTransaction, commit, rollback

@@ -13,11 +13,8 @@ app.use(express.static('public'));
 app.use(logger);
 app.use(express.json());
 
-// Importing routers
-const userRouter = require('./routes/users');
-
 // Setting up routes
-app.use('/users', userRouter);
+app.use('/users', require('./routes/users'));
 
 // Startig the server on the specified port
 app.listen(port, err => {
