@@ -98,6 +98,7 @@ router.post('/register/3', async (req, res) => {
                 message: 'The value of date is not valid',
             });
         }
+
         if (new Date(dob).getTime() > new Date().getTime()) {
             return res.send(400, {
                 error: 'Invalid Attribute value',
@@ -149,14 +150,7 @@ router.post('/login', async (req, res) => {
 
         const { email, password } = req.body;
 
-        const hashedPassowrd = sha256.x2(password + SECRET_KEY);
-
-        const VALIDATE_USER_DETAILS = 'SELECT id FROM user_details WHERE email = ? AND hashed_password = ?';
-        const userDetails = await dbConnection.queryDatabase(VALIDATE_USER_DETAILS, [email, hashedPassowrd]);
-
-        if (userDetails.length == 0) {
-            loggingService.errorLog(error, { resource: '/login' });
-
+        if (!await areUserCredentialsValid(email, password)) {
             return res.send(400, {
                 error: 'Invalid login attempt',
                 message: 'Invalid email or password entered',
@@ -165,12 +159,7 @@ router.post('/login', async (req, res) => {
 
         const userId = userDetails[0].id;
 
-        const VALIDATE_USER_SESSIONS = 'SELECT `id` FROM `user_sessions` WHERE `is_session_active` = 1 AND `user_id` = ? and session_expiry_date > CURRENT_TIMESTAMP';
-        const userSessionsInfo = await dbConnection.queryDatabase(VALIDATE_USER_SESSIONS, [userId]);
-
-        if (userSessionsInfo.length > MAX_SESSIONS) {
-            loggingService.errorLog(error, { resource: '/login' });
-
+        if (hasUserReachedMaxSessions(userId)) {
             return res.send(400, {
                 error: 'Invalid login attempt',
                 message: 'Maximum active sessions limit reached',
@@ -208,4 +197,20 @@ async function doesFieldExistForUser(field, value) {
     const countData = await dbConnection.queryDatabase(GET_USER_COUNT, [value]);
 
     return countData.count == 1;
+}
+
+async function areUserCredentialsValid(email, password) {
+    const hashedPassowrd = sha256.x2(password + SECRET_KEY);
+
+    const VALIDATE_USER_DETAILS = 'SELECT `id` FROM `user_details` WHERE `email` = ? AND `hashed_password` = ?';
+    const userDetails = await dbConnection.queryDatabase(VALIDATE_USER_DETAILS, [email, hashedPassowrd]);
+
+    return userDetails.length !== 0;
+}
+
+async function hasUserReachedMaxSessions(userId) {
+    const VALIDATE_USER_SESSIONS = 'SELECT `id` FROM `user_sessions` WHERE `is_session_active` = 1 AND `user_id` = ? and session_expiry_date > CURRENT_TIMESTAMP';
+    const userSessionsInfo = await dbConnection.queryDatabase(VALIDATE_USER_SESSIONS, [userId]);
+
+    return userSessionsInfo.length > MAX_SESSIONS;
 }
