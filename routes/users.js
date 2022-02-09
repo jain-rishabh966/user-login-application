@@ -123,7 +123,7 @@ router.post('/logout', async (req, res) => {
         const LOG_USER_OUT = 'UPDATE `user_sessions` SET `is_session_active` = 0';
         await dbConnection.queryDatabase(LOG_USER_OUT, [req.session.sessionId]);
 
-        res.status(200).send('OK');
+        res.status(200).send({ message: 'OK' });
 
         req.session.isLoggedIn = false;
         delete req.session.sessionId;
