@@ -198,7 +198,7 @@ async function areUserCredentialsValid(email, password) {
     const VALIDATE_USER_DETAILS = 'SELECT `id` FROM `user_details` WHERE `email` = ? AND `hashed_password` = ?';
     const userDetails = await dbConnection.queryDatabase(VALIDATE_USER_DETAILS, [email, hashedPassowrd]);
 
-    return { status: userDetails.length !== 0, userId: userDetails[0].id };
+    return { status: userDetails.length !== 0, userId: userDetails[0]?.id };
 }
 
 async function hasUserReachedMaxSessions(userId) {
