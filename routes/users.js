@@ -147,14 +147,13 @@ router.get('/login', async (req, res) => {
 
         const { email, password } = req.body;
 
-        if (!await areUserCredentialsValid(email, password)) {
+        const { status: validCredentials, userId } = await areUserCredentialsValid(email, password);
+        if (!validCredentials) {
             return res.status(400).send({
                 error: 'Invalid login attempt',
                 message: 'Invalid email or password entered',
             });
         }
-
-        const userId = userDetails[0].id;
 
         if (await hasUserReachedMaxSessions(userId)) {
             return res.status(400).send({
@@ -175,7 +174,7 @@ router.get('/login', async (req, res) => {
         req.session.sessionId = sessionInfo.insertId;
         req.session.userId = userId;
 
-        res.status(200).send('OK');
+        res.status(200).send({ message: 'OK' });
     } catch (error) {
         loggingService.errorLog(error, {
             resource: '/login'
@@ -199,7 +198,7 @@ async function areUserCredentialsValid(email, password) {
     const VALIDATE_USER_DETAILS = 'SELECT `id` FROM `user_details` WHERE `email` = ? AND `hashed_password` = ?';
     const userDetails = await dbConnection.queryDatabase(VALIDATE_USER_DETAILS, [email, hashedPassowrd]);
 
-    return userDetails.length !== 0;
+    return { status: userDetails.length !== 0, userId: userDetails[0].id };
 }
 
 async function hasUserReachedMaxSessions(userId) {
