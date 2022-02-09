@@ -15,7 +15,7 @@ module.exports = {
  */
 async function queryDatabase(SQL_QUERY, params = []) {
     return await new Promise((resolve, reject) => {
-        mySqlConnection.query(SQL_QUERY, params, function (error, result) {
+        mySqlConnection.getConnection().query(SQL_QUERY, params, function (error, result) {
             if (error) return reject(error);
             resolve(result);
         });
@@ -27,7 +27,7 @@ async function queryDatabase(SQL_QUERY, params = []) {
  */
 async function beginTransaction() {
     await new Promise((resolve, reject) => {
-        mySqlConnection.beginTransaction(error => {
+        mySqlConnection.getConnection().beginTransaction(error => {
             if (error) return reject(error);
             resolve();
         });
@@ -39,7 +39,7 @@ async function beginTransaction() {
  */
 async function commit() {
     await new Promise((resolve, reject) => {
-        mySqlConnection.commit(error => {
+        mySqlConnection.getConnection().commit(error => {
             if (error) return reject(error);
             resolve();
         });
@@ -51,7 +51,7 @@ async function commit() {
  */
 async function rollback() {
     await new Promise((resolve, reject) => {
-        mySqlConnection.rollback(error => {
+        mySqlConnection.getConnection().rollback(error => {
             if (error) return reject(error);
             resolve();
         });

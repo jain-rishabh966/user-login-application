@@ -13,7 +13,7 @@ module.exports = {
  * @param {Error} error error that occured
  */
 function errorLog(error, additionalInfo = {}) {
-    const log = {
+    let log = {
         when: dateTimeService.getDateTime(),
         error,
     };

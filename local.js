@@ -9,9 +9,10 @@ module.exports = {
     mysql: {
         credentials: {
             user: 'root',
-            passowrd: 'root',
+            password: 'root',
         },
         databaseName: 'userLoginApplication',
         host: 'localhost',
     },
+    SESSION_SECRET: 'Ssdsd@#e$#Rfe@#$d#$#',
 };

@@ -1,6 +1,8 @@
 const express = require('express');
+const bodyParser = require('body-parser');
+const session = require('express-session');
 
-const { port } = require('./local');
+const { port, SESSION_SECRET } = require('./local');
 const loggingService = require('./services/LoggingService');
 
 const app = express();
@@ -9,6 +11,10 @@ const app = express();
 app.set('view engine', 'ejs');
 
 // Setting up middleware
+app.use(bodyParser.urlencoded({
+    extended: true
+}));
+app.use(session({ resave: true, secret: SESSION_SECRET, saveUninitialized: true }));
 app.use(express.static('public'));
 app.use(logger);
 app.use(express.json());

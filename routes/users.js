@@ -11,7 +11,7 @@ const router = express.Router();
 router.post('/register/1', async (req, res) => {
     try {
         if (req.body?.mobile == null || req.body?.name == null) {
-            return res.send(400, {
+            return res.status(400).send({
                 error: 'Required Attribute Not Found',
                 message: 'Missing mobile or name of the user',
             });
@@ -19,33 +19,30 @@ router.post('/register/1', async (req, res) => {
 
         const { mobile, name } = req.body;
 
-        if (doesFieldExistForUser('mobile', mobile)) {
-            return res.send(400, {
+        if (await doesFieldExistForUser('mobile', mobile)) {
+            return res.status(400).send({
                 error: 'Re-registration Attempt',
                 message: 'Mobile number already exists in the database',
             });
         }
 
-        req.session = {
-            ...req.session,
-            isLoggedIn: false,
-            name,
-            mobile
-        };
+        req.session.isLoggedIn = false;
+        req.session.name = name;
+        req.session.mobile = mobile;
 
-        res.send(200, { message: 'OK' });
+        res.status(200).send({ message: 'OK' });
     } catch (error) {
         loggingService.errorLog(error, {
             resource: '/register/1'
         });
-        res.send(500, 'Internal Server Error');
+        res.status(500).send('Internal Server Error');
     }
 });
 
 router.post('/register/2', async (req, res) => {
     try {
         if (req.body?.email == null || req.body?.password == null) {
-            return res.send(400, {
+            return res.status(400).send({
                 error: 'Required Attribute Not Found',
                 message: 'Missing email or password',
             });
@@ -53,8 +50,8 @@ router.post('/register/2', async (req, res) => {
 
         const { email, password } = req.body;
 
-        if (doesFieldExistForUser('email', email)) {
-            return res.send(400, {
+        if (await doesFieldExistForUser('email', email)) {
+            return res.status(400).send({
                 error: 'Re-registration Attempt',
                 message: 'Email id already exists in the database',
             });
@@ -62,18 +59,15 @@ router.post('/register/2', async (req, res) => {
 
         const hashedPassowrd = sha256.x2(password + SECRET_KEY);
 
-        req.session = {
-            ...req.session,
-            email,
-            password: hashedPassowrd,
-        };
+        req.session.email = email;
+        req.session.password = hashedPassowrd;
 
-        res.send(200, { message: 'OK' });
+        res.status(200).send({ message: 'OK' });
     } catch (error) {
         loggingService.errorLog(error, {
             resource: '/register/2'
         });
-        res.send(500, 'Internal Server Error');
+        res.status(500).send('Internal Server Error');
     }
 });
 
@@ -84,7 +78,7 @@ router.post('/register/3', async (req, res) => {
             req.body?.fathersName == null ||
             req.body?.dob == null
         ) {
-            return res.send(400, {
+            return res.status(400).send({
                 error: 'Required Attribute Not Found',
                 message: 'Missing pan, date of birth or fathers name',
             });
@@ -93,14 +87,14 @@ router.post('/register/3', async (req, res) => {
         const { pan, fathersName, dob } = req.body;
 
         if (new Date(dob).toString() === 'Invalid Date') {
-            return res.send(400, {
+            return res.status(400).send({
                 error: 'Invalid Attribute value',
                 message: 'The value of date is not valid',
             });
         }
 
         if (new Date(dob).getTime() > new Date().getTime()) {
-            return res.send(400, {
+            return res.status(400).send({
                 error: 'Invalid Attribute value',
                 message: 'Date of birth has to be before today',
             });
@@ -108,19 +102,19 @@ router.post('/register/3', async (req, res) => {
 
         const { email, password, name, mobile } = req.session;
 
-        const CREATE_NEW_USER = 'INSERT INTO user_details (`mobile`, `name`, `hashed_password`, `email`, `pan`, `fathers_name`, `dob`) VALUES ?';
+        const CREATE_NEW_USER = 'INSERT INTO user_details (`mobile`, `name`, `hashed_password`, `email`, `pan`, `fathers_name`, `dob`) VALUES (?, ?, ?, ?, ?, ?, ?)';
 
-        await dbConnection.queryDatabase(CREATE_NEW_USER, [
+        await dbConnection.queryDatabase(CREATE_NEW_USER,
             [mobile, name, password, email, pan, fathersName, dob]
-        ]);
+        );
 
         req.session.isLoggedIn = true;
-        res.send(201, { message: 'OK' });
+        res.status(201).send({ message: 'OK' });
     } catch (error) {
         loggingService.errorLog(error, {
             resource: '/register/3'
         });
-        res.send(500, 'Internal Server Error');
+        res.status(500).send('Internal Server Error');
     }
 });
 
@@ -129,20 +123,23 @@ router.post('/logout', async (req, res) => {
         const LOG_USER_OUT = 'UPDATE `user_sessions` SET `is_session_active` = 0';
         await dbConnection.queryDatabase(LOG_USER_OUT, [req.session.sessionId]);
 
-        res.send(200, 'OK')
-        delete req.session;
+        res.status(200).send('OK');
+
+        req.session.isLoggedIn = false;
+        delete req.session.sessionId;
+        delete req.session.userId;
     } catch (error) {
         loggingService.errorLog(error, {
             resource: '/logout'
         });
-        res.send(500, 'Internal Server Error');
+        res.status(500).send('Internal Server Error');
     }
 });
 
 router.post('/login', async (req, res) => {
     try {
         if (req.body?.email == null || req.body?.password == null) {
-            return res.send(400, {
+            return res.status(400).send({
                 error: 'Required Attribute Not Found',
                 message: 'Missing email or password',
             });
@@ -151,7 +148,7 @@ router.post('/login', async (req, res) => {
         const { email, password } = req.body;
 
         if (!await areUserCredentialsValid(email, password)) {
-            return res.send(400, {
+            return res.status(400).send({
                 error: 'Invalid login attempt',
                 message: 'Invalid email or password entered',
             });
@@ -159,8 +156,8 @@ router.post('/login', async (req, res) => {
 
         const userId = userDetails[0].id;
 
-        if (hasUserReachedMaxSessions(userId)) {
-            return res.send(400, {
+        if (await hasUserReachedMaxSessions(userId)) {
+            return res.status(400).send({
                 error: 'Invalid login attempt',
                 message: 'Maximum active sessions limit reached',
             });
@@ -169,24 +166,21 @@ router.post('/login', async (req, res) => {
         const sessionExpiry = new Date();
         sessionExpiry.setHours(sessionExpiry.getHours() + MAX_SESSION_DURATION);
 
-        const LOG_USER_IN = 'INSERT INTO user_sessions (`user_id`,`session_expiry_date`) VALUES ?';
-        const sessionInfo = await dbConnection.queryDatabase(LOG_USER_IN, [
+        const LOG_USER_IN = 'INSERT INTO user_sessions (`user_id`,`session_expiry_date`) VALUES (?, ?)';
+        const sessionInfo = await dbConnection.queryDatabase(LOG_USER_IN,
             [userId, sessionExpiry]
-        ]);
+        );
 
-        res.send(200, 'OK');
+        req.session.isLoggedIn = true;
+        req.session.sessionId = sessionInfo.insertId;
+        req.session.userId = userId;
 
-        req.session = {
-            ...req.session,
-            isLoggedIn: true,
-            sessionId: sessionInfo.insertId,
-            userId,
-        };
+        res.status(200).send('OK');
     } catch (error) {
         loggingService.errorLog(error, {
             resource: '/login'
         });
-        res.send(500, 'Internal Server Error');
+        res.status(500).send('Internal Server Error');
     }
 });
 
@@ -196,7 +190,7 @@ async function doesFieldExistForUser(field, value) {
     const GET_USER_COUNT = 'SELECT COUNT(`' + field + '`) AS `count` FROM `user_details` WHERE `' + field + '` = ?';
     const countData = await dbConnection.queryDatabase(GET_USER_COUNT, [value]);
 
-    return countData.count == 1;
+    return countData[0].count == 1;
 }
 
 async function areUserCredentialsValid(email, password) {
