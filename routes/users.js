@@ -136,7 +136,7 @@ router.post('/logout', async (req, res) => {
     }
 });
 
-router.post('/login', async (req, res) => {
+router.get('/login', async (req, res) => {
     try {
         if (req.body?.email == null || req.body?.password == null) {
             return res.status(400).send({
