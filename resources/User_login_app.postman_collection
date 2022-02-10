@@ -42,7 +42,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n    \"email\": \"jain.rishabh966@gmail.com\",\r\n    \"password\": \"dl2cp6113\"\r\n}",
+					"raw": "{\r\n    \"email\": \"jain.rishabh966@gmail.com\",\r\n    \"password\": \"abc123xyz\"\r\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -105,7 +105,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n    \"email\": \"jain.rishabh966@gmail.com\",\r\n    \"password\": \"dl2cp6113\"\r\n}",
+					"raw": "{\r\n    \"email\": \"jain.rishabh966@gmail.com\",\r\n    \"password\": \"abc123xyz\"\r\n}",
 					"options": {
 						"raw": {
 							"language": "json"
