@@ -21,5 +21,17 @@ function errorLog(error, additionalInfo = {}) {
     log = { ...log, ...additionalInfo };
 
     console.error(log);
-    fs.writeFile(`${LOGS_DIR}/error/${dateTimeService.getDate()}/${dateTimeService.getTime()}`, error);
+
+    const PATH = `${LOGS_DIR}/error/${dateTimeService.getDate()}`;
+    if (!fs.existsSync(PATH)) {
+        fs.mkdirSync(PATH, {
+            recursive: true
+        });
+    }
+
+    fs.appendFile(`${PATH}/logs`, JSON.stringify({
+        time: dateTimeService.getTime(), error
+    }) + '\n\n', err => {
+        if (err) console.error({ err });
+    });
 };
